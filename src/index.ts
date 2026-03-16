@@ -11,6 +11,19 @@ const server = new McpServer({
   version: "0.1.0",
 });
 
+export async function listSheets(filePath: string) {
+  const absPath = resolve(filePath);
+  const workbook = XLSX.readFile(absPath);
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(workbook.SheetNames, null, 2),
+      },
+    ],
+  };
+}
+
 server.registerTool(
   "list_sheets",
   {
@@ -19,19 +32,36 @@ server.registerTool(
       filePath: z.string().describe("Absolute path to the Excel file"),
     },
   },
-  async ({ filePath }) => {
-    const absPath = resolve(filePath);
-    const workbook = XLSX.readFile(absPath);
+  async ({ filePath }) => listSheets(filePath)
+);
+
+export async function readSheet(filePath: string, sheetName?: string) {
+  const absPath = resolve(filePath);
+  const workbook = XLSX.readFile(absPath);
+
+  const targetSheet = sheetName ?? workbook.SheetNames[0];
+  if (!targetSheet || !workbook.Sheets[targetSheet]) {
     return {
       content: [
         {
           type: "text" as const,
-          text: JSON.stringify(workbook.SheetNames, null, 2),
+          text: `Sheet "${targetSheet}" not found. Available sheets: ${workbook.SheetNames.join(", ")}`,
         },
       ],
+      isError: true,
     };
   }
-);
+
+  const data = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheet]);
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(data, null, 2),
+      },
+    ],
+  };
+}
 
 server.registerTool(
   "read_sheet",
@@ -46,33 +76,60 @@ server.registerTool(
         .describe("Sheet name to read. Defaults to the first sheet"),
     },
   },
-  async ({ filePath, sheetName }) => {
-    const absPath = resolve(filePath);
-    const workbook = XLSX.readFile(absPath);
+  async ({ filePath, sheetName }) => readSheet(filePath, sheetName)
+);
 
-    const targetSheet = sheetName ?? workbook.SheetNames[0];
-    if (!targetSheet || !workbook.Sheets[targetSheet]) {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Sheet "${targetSheet}" not found. Available sheets: ${workbook.SheetNames.join(", ")}`,
-          },
-        ],
-        isError: true,
-      };
-    }
+export async function readRange(
+  filePath: string,
+  range: string,
+  sheetName?: string
+) {
+  const absPath = resolve(filePath);
+  const workbook = XLSX.readFile(absPath);
 
-    const data = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheet]);
+  const targetSheet = sheetName ?? workbook.SheetNames[0];
+  if (!targetSheet || !workbook.Sheets[targetSheet]) {
     return {
       content: [
         {
           type: "text" as const,
-          text: JSON.stringify(data, null, 2),
+          text: `Sheet "${targetSheet}" not found. Available sheets: ${workbook.SheetNames.join(", ")}`,
         },
       ],
+      isError: true,
     };
   }
+
+  const data = XLSX.utils.sheet_to_json(workbook.Sheets[targetSheet], {
+    range,
+  });
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(data, null, 2),
+      },
+    ],
+  };
+}
+
+server.registerTool(
+  "read_range",
+  {
+    description:
+      "Read data from a specific cell range in an Excel sheet and return as JSON array (first row of range as headers)",
+    inputSchema: {
+      filePath: z.string().describe("Absolute path to the Excel file"),
+      range: z
+        .string()
+        .describe('Cell range to read (e.g., "A1:C10", "B2:D5")'),
+      sheetName: z
+        .string()
+        .optional()
+        .describe("Sheet name to read. Defaults to the first sheet"),
+    },
+  },
+  async ({ filePath, range, sheetName }) => readRange(filePath, range, sheetName)
 );
 
 async function main() {
