@@ -1,0 +1,7 @@
+---
+"cellra": minor
+---
+
+### Features
+- Add new `read_range` MCP tool for reading specific cell ranges from Excel sheets
+- Extract `listSheets`, `readSheet`, and `readRange` into standalone exported functions to improve reusability
