@@ -1,0 +1,38 @@
+{
+  "name": "cellra",
+  "version": "0.1.0",
+  "description": "MCP server for reading Excel files",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "cellra": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "release": "pnpm build && changeset publish --provenance",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "mcp",
+    "excel",
+    "xlsx",
+    "claude"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": "10.26.1"
+  },
+  "packageManager": "pnpm@10.26.1"
+}
