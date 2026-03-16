@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import * as XLSX from "xlsx";
+import XLSX from "xlsx";
 import { z } from "zod";
 import { resolve } from "path";
 
